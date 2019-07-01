@@ -74,6 +74,18 @@ public class AADAuthenticationProperties {
      * If Telemetry events should be published to Azure AD.
      */
     private boolean allowTelemetry = true;
+    
+    /**
+     * Stateless. If true, no session will be used to retrieve principalManager.
+     */
+    private boolean sessionStateless = false;
+    
+    /**
+     * Get sessionStateless
+     */
+    public Boolean getSessionStateless() {
+        return sessionStateless;
+    }
 
     @DeprecatedConfigurationProperty(reason = "Configuration moved to UserGroup class to keep UserGroup properties "
             + "together", replacement = "azure.activedirectory.user-group.allowed-groups")

@@ -91,6 +91,19 @@ private AADAuthenticationFilter aadAuthFilter;
 * Role-based Authorization with annotation `@PreAuthorize("hasRole('GROUP_NAME')")`
 * Role-based Authorization with method `isMemberOf()`
 
+#### Stateless API
+
+This scenario fits best for stateless Spring backends exposing an API to SPAs ([OAuth 2.0 implicit grant flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-oauth2-implicit-grant-flow))  
+
+To prevent the backend to create User session with JSESSIONID cookie.
+
+Configure application.properties:
+
+```properties
+azure.activedirectory.session-stateless=true
+```
+
+
 #### Allow telemetry
 Microsoft would like to collect data about how users use this Spring boot starter.
 Microsoft uses this information to improve our tooling experience. Participation is voluntary.

@@ -52,8 +52,39 @@ public class AADAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         final String authHeader = request.getHeader(TOKEN_HEADER);
+        final boolean sessionStateless = aadAuthProps.getSessionStateless();
+        
+        if (sessionStateless) {
+            try {
+                final String idToken = authHeader.replace(TOKEN_TYPE, "");
 
-        if (authHeader != null && authHeader.startsWith(TOKEN_TYPE)) {
+                final ClientCredential credential =
+                        new ClientCredential(aadAuthProps.getClientId(), aadAuthProps.getClientSecret());
+
+                final AzureADGraphClient client =
+                        new AzureADGraphClient(credential, aadAuthProps, serviceEndpointsProps);
+
+                final UserPrincipal principal = principalManager.buildUserPrincipal(idToken);
+
+                final String tenantId = principal.getClaim().toString();
+                final String graphApiToken = client.acquireTokenForGraphApi(idToken, tenantId).getAccessToken();
+
+                principal.setUserGroups(client.getGroups(graphApiToken));
+
+                final Authentication authentication = new PreAuthenticatedAuthenticationToken(
+                        principal, null, client.convertGroupsToGrantedAuthorities(principal.getUserGroups()));
+
+                authentication.setAuthenticated(true);
+                log.info("Request token verification success. {}", authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (MalformedURLException | ParseException | BadJOSEException | JOSEException ex) {
+                log.error("Failed to initialize UserPrincipal.", ex);
+                throw new ServletException(ex);
+            } catch (ServiceUnavailableException | InterruptedException | ExecutionException ex) {
+                log.error("Failed to acquire graph api token.", ex);
+                throw new ServletException(ex);
+            }
+        } else if (authHeader != null && authHeader.startsWith(TOKEN_TYPE)) {
             try {
                 final String idToken = authHeader.replace(TOKEN_TYPE, "");
                 UserPrincipal principal = (UserPrincipal) request
